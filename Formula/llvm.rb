@@ -17,7 +17,6 @@ class Llvm < Formula
     sha256 cellar: :any,                 big_sur:       "ff9a71b7b35ecb6c1dfcfe40152b00f4777a3f4a10dcf5cc41044458b02c99cd"
     sha256 cellar: :any,                 catalina:      "e9a8185649b019863424068c3efa1b3c7d85747d12260b1dac07895690f50383"
     sha256 cellar: :any,                 mojave:        "2382196cb9626c46aa27ce146270c6625deca1b8a47926457131fb22ba243899"
-    sha256 cellar: :any_skip_relocation, x86_64_linux:  "fb438e1227be43ab1db27d68001e4b9c48e5a1d838318a64c008454454cc61c1" # linuxbrew-core
   end
 
   # Clang cannot find system headers if Xcode CLT is not installed
@@ -132,14 +131,16 @@ class Llvm < Formula
     end
 
     on_linux do
-      ENV.append "CXXFLAGS", "-fpermissive"
-      ENV.append "CFLAGS", "-fpermissive"
+      ENV.append "CXXFLAGS", "-fpermissive -Wno-free-nonheap-object"
+      ENV.append "CFLAGS", "-fpermissive -Wno-free-nonheap-object"
 
       args << "-DLLVM_ENABLE_LIBCXX=OFF"
       args << "-DLLVM_CREATE_XCODE_TOOLCHAIN=OFF"
       args << "-DCLANG_DEFAULT_CXX_STDLIB=libstdc++"
       # Enable llvm gold plugin for LTO
       args << "-DLLVM_BINUTILS_INCDIR=#{Formula["binutils"].opt_include}"
+      # Parts of Polly fail to correctly build with PIC when being used for DSOs.
+      args << "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
       runtime_args = %w[
         -DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON
